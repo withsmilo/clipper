@@ -34,6 +34,7 @@ class DockerContainerManager(ContainerManager):
                  clipper_rpc_port=7000,
                  redis_ip=None,
                  redis_port=6379,
+                 redis_pw='clipper',
                  prometheus_port=9090,
                  docker_network="clipper_network",
                  extra_container_kwargs={}):
@@ -59,6 +60,8 @@ class DockerContainerManager(ContainerManager):
         redis_port : int, optional
             The Redis port. If ``redis_ip`` is set to None, Clipper will start Redis on this port.
             If ``redis_ip`` is provided, Clipper will connect to Redis on this port.
+        redis_pw : str, optional
+            The password of Redis cluster
         docker_network : str, optional
             The docker network to attach the containers to. You can read more about Docker
             networking in the
@@ -79,6 +82,11 @@ class DockerContainerManager(ContainerManager):
         else:
             self.external_redis = True
         self.redis_port = redis_port
+        if redis_pw is None:
+            raise ClipperException(
+                "Redis password is needed for security"
+            )
+        self.redis_pw = redis_pw
         self.prometheus_port = prometheus_port
         if docker_network is "host":
             raise ClipperException(
@@ -153,9 +161,14 @@ class DockerContainerManager(ContainerManager):
             redis_labels = self.common_labels.copy()
             redis_labels[CLIPPER_DOCKER_PORT_LABELS['redis']] = str(
                 self.redis_port)
+            redis_cmd = ("redis-server "
+                         "--port {redis_port} "
+                         "--requirepass {redis_pw}").format(
+                redis_port=CLIPPER_INTERNAL_REDIS_PORT,
+                redis_pw=self.redis_pw)
             redis_container = self.docker_client.containers.run(
                 'redis:alpine',
-                "redis-server --port %s" % CLIPPER_INTERNAL_REDIS_PORT,
+                redis_cmd,
                 name="redis-{}".format(random.randint(
                     0, 100000)),  # generate a random name
                 ports={
@@ -165,8 +178,12 @@ class DockerContainerManager(ContainerManager):
                 **self.extra_container_kwargs)
             self.redis_ip = redis_container.name
 
-        mgmt_cmd = "--redis_ip={redis_ip} --redis_port={redis_port}".format(
-            redis_ip=self.redis_ip, redis_port=CLIPPER_INTERNAL_REDIS_PORT)
+        mgmt_cmd = ("--redis_ip={redis_ip} "
+                    "--redis_port={redis_port} "
+                    "--redis_pw={redis_pw}").format(
+                redis_ip=self.redis_ip,
+                redis_port=CLIPPER_INTERNAL_REDIS_PORT,
+                redis_pw=self.redis_pw)
         self.clipper_management_port = find_unbound_port(
             self.clipper_management_port)
         mgmt_labels = self.common_labels.copy()
@@ -185,12 +202,14 @@ class DockerContainerManager(ContainerManager):
             labels=mgmt_labels,
             **self.extra_container_kwargs)
 
-        query_cmd = ("--redis_ip={redis_ip} --redis_port={redis_port} "
-                     "--prediction_cache_size={cache_size}").format(
-                         redis_ip=self.redis_ip,
-                         redis_port=CLIPPER_INTERNAL_REDIS_PORT,
-                         cache_size=cache_size)
-
+        query_cmd = ("--redis_ip={redis_ip} "
+                     "--redis_port={redis_port} "
+                     "--redis_pw={redis_pw} "
+                     "--prediction_cache_size={cache_size} ").format(
+                redis_ip=self.redis_ip,
+                redis_port=CLIPPER_INTERNAL_REDIS_PORT,
+                redis_pw=self.redis_pw,
+                cache_size=cache_size)
         query_container_id = random.randint(0, 100000)
         query_name = "query_frontend-{}".format(query_container_id)
         self.clipper_query_port = find_unbound_port(self.clipper_query_port)

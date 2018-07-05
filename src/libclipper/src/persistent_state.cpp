@@ -41,6 +41,8 @@ StateDB::StateDB()
               "Retrying in 1 second...");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  if (!conf.get_redis_pw().empty())
+    clipper::redis::auth(redis_connection_, conf.get_redis_pw());
   if (!redis::send_cmd_no_reply<std::string>(
           redis_connection_, {"SELECT", std::to_string(REDIS_STATE_DB_NUM)})) {
     throw std::runtime_error("Could not select StateDB table from Redis");

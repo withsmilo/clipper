@@ -18,6 +18,8 @@ spec:
         - redis-server
         - --port
         - "6379"
+        - --requirepass
+        - {{ redis_pw }}
         image: redis:alpine
         name: redis
         ports:

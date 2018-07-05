@@ -14,6 +14,8 @@ int main(int argc, char* argv[]) {
         cxxopts::value<std::string>()->default_value(clipper::DEFAULT_REDIS_ADDRESS))
     ("redis_port", "Redis port",
         cxxopts::value<int>()->default_value(std::to_string(clipper::DEFAULT_REDIS_PORT)))
+    ("redis_pw", "Redis password",
+        cxxopts::value<std::string>()->default_value(clipper::DEFAULT_REDIS_PW))
     ("prediction_cache_size", "Size of the prediction cache in bytes, excluding cache metadata",
        cxxopts::value<long>()->default_value(std::to_string(clipper::DEFAULT_PREDICTION_CACHE_SIZE_BYTES)));
   // clang-format on
@@ -22,6 +24,7 @@ int main(int argc, char* argv[]) {
   clipper::Config& conf = clipper::get_config();
   conf.set_redis_address(options["redis_ip"].as<std::string>());
   conf.set_redis_port(options["redis_port"].as<int>());
+  conf.set_redis_pw(options["redis_pw"].as<std::string>());
   conf.set_prediction_cache_size(options["prediction_cache_size"].as<long>());
   conf.ready();
 

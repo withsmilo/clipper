@@ -176,6 +176,10 @@ class RequestHandler {
           "Retrying in 1 second...");
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+    if (!conf.get_redis_pw().empty()) {
+      clipper::redis::auth(redis_connection_, conf.get_redis_pw());
+      redis_subscriber_.auth(conf.get_redis_pw());
+    }
     server_.add_endpoint(
         ADD_APPLICATION, "POST",
         [this](std::shared_ptr<HttpServer::Response> response,

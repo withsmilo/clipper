@@ -66,6 +66,7 @@ class KubernetesContainerManager(ContainerManager):
                  kubernetes_proxy_addr=None,
                  redis_ip=None,
                  redis_port=6379,
+                 redis_pw='clipper',
                  useInternalIP=False,
                  namespace='default',
                  create_namespace_if_not_exists=False):
@@ -92,6 +93,8 @@ class KubernetesContainerManager(ContainerManager):
         redis_port : int, optional
             The Redis port. If ``redis_ip`` is set to None, Clipper will start Redis on this port.
             If ``redis_ip`` is provided, Clipper will connect to Redis on this port.
+        redis_pw : str, optional
+            The password of Redis cluster
         useInternalIP : bool, optional
             Use Internal IP of the K8S nodes . If ``useInternalIP`` is set to False, Clipper will
             throw an exception if none of the nodes have ExternalDNS.
@@ -124,6 +127,7 @@ class KubernetesContainerManager(ContainerManager):
 
         self.redis_ip = redis_ip
         self.redis_port = redis_port
+        self.redis_pw = redis_pw
         self.useInternalIP = useInternalIP
         config.load_kube_config()
         configuration.assert_hostname = False
@@ -193,6 +197,7 @@ class KubernetesContainerManager(ContainerManager):
                 self._k8s_beta.create_namespaced_deployment(
                     body=self._generate_config(
                         CONFIG_FILES['redis']['deployment'],
+                        redis_pw=self.redis_pw,
                         cluster_name=self.cluster_name),
                     namespace=self.k8s_namespace)
 
@@ -215,6 +220,7 @@ class KubernetesContainerManager(ContainerManager):
                 image=mgmt_image,
                 redis_service_host=self.redis_ip,
                 redis_service_port=self.redis_port,
+                redis_service_pw=self.redis_pw,
                 cluster_name=self.cluster_name)
             self._k8s_beta.create_namespaced_deployment(
                 body=mgmt_deployment_data, namespace=self.k8s_namespace)
@@ -236,6 +242,7 @@ class KubernetesContainerManager(ContainerManager):
                     exporter_image=frontend_exporter_image,
                     redis_service_host=self.redis_ip,
                     redis_service_port=self.redis_port,
+                    redis_service_pw=self.redis_pw,
                     cache_size=cache_size,
                     name='query-frontend-{}'.format(query_frontend_id),
                     id_label=str(query_frontend_id),

@@ -131,6 +131,8 @@ void RPCService::manage_service(const string address) {
               "Retrying in 1 second...");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  if (!conf.get_redis_pw().empty())
+    clipper::redis::auth(*redis_connection, conf.get_redis_pw());
 
   while (active_) {
     // Set poll timeout based on whether there are outgoing messages to

@@ -228,6 +228,10 @@ std::vector<std::string> get_linked_models(redox::Redox& redis,
   return linked_models;
 }
 
+bool auth(redox::Redox& redis, const std::string& pw) {
+  return send_cmd_no_reply<string>(redis, {"AUTH", pw});
+}
+
 bool add_model(Redox& redis, const VersionedModelId& model_id,
                const InputType& input_type, const std::vector<string>& labels,
                const std::string& container_name,

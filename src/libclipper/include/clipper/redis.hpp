@@ -113,6 +113,14 @@ boost::optional<std::string> get_current_model_version(
     redox::Redox& redis, const std::string& model_name);
 
 /**
+ * Authenticate Redis with given password.
+ *
+ * \param pw Redis' password
+ * \return Returns true if the authendication was successful.
+ */
+bool auth(redox::Redox& redis, const std::string& pw);
+
+/**
  * Adds a model into the model table. This will
  * overwrite any existing entry with the same key.
  *

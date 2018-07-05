@@ -23,6 +23,7 @@ spec:
       - args: # If redis_service_host == None, default to env var
         - "--redis_ip={{ redis_service_host | default('$(REDIS_SERVICE_HOST)', true) }}"
         - "--redis_port={{ redis_service_port | default('$(REDIS_SERVICE_PORT)', true) }}"
+        - "--redis_pw={{ redis_service_pw | default('$(REDIS_SERVICE_PW)', true) }}"
         - "--prediction_cache_size={{ cache_size }}"
         image: {{ image }}
         imagePullPolicy: Always
